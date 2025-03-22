@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,7 +27,6 @@ type chirpRes struct {
 
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	w.Header().Set("Content-Type", "application/json")
 
 	bytes, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -77,6 +77,7 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(responseBytes)
 }
@@ -118,5 +119,43 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 	}
 
 	w.Header().Set("Contet-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(responseBytes)
+}
+
+func (cfg *apiConfig) handlerGetChirpById(w http.ResponseWriter, r *http.Request) {
+	chirpId, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		writeError(err, "couldn't parse id", http.StatusBadRequest, w)
+		return
+	}
+
+	chirp, err := cfg.db.GetChirp(r.Context(), chirpId)
+	if err != nil && strings.Contains(err.Error(), "no rows in result set") {
+		writeError(nil, "chirp not found", http.StatusNotFound, w)
+		return
+	} 
+	
+	if err != nil && !strings.Contains(err.Error(), "no rows in result set") {
+		writeError(err, "couldn't retrieve chirp", http.StatusInternalServerError, w)
+		return
+	}
+
+	chirpRes := chirpRes{
+		Id:        chirp.ID.String(),
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body:      chirp.Body,
+		UserId:    chirp.UserID.String(),
+	}
+
+	responseBytes, err := json.Marshal(chirpRes)
+	if err != nil {
+		writeError(err, "couldn't marshal response", http.StatusInternalServerError, w)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	w.Write(responseBytes)
 }

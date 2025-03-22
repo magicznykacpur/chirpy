@@ -24,6 +24,7 @@ func writeError(err error, message string, status int, w http.ResponseWriter) {
 	if err != nil {
 		w.Write([]byte("marshalling error"))
 	} else {
+		w.Header().Set("Contet-Type", "application/json")
 		w.Write(bytes)
 	}
 }

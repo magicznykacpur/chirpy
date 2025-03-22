@@ -12,7 +12,7 @@ RETURNING *;
 -- name: GetChirp :one
 SELECT * FROM chirps where id = $1;
 
--- name: GetChirpsBYUser :many
+-- name: GetChirpsByUser :many
 SELECT * FROM chirps where user_id = $1;
 
 -- name: GetAllChirps :many
