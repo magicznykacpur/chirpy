@@ -10,10 +10,12 @@ import (
 	"sync/atomic"
 
 	"github.com/magicznykacpur/chirpy/internal/cleaner"
+	"github.com/magicznykacpur/chirpy/internal/database"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	db *database.Queries
 }
 
 func (cfg *apiConfig) middlewareServerHitsInc(next http.Handler) http.Handler {
