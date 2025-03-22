@@ -24,14 +24,14 @@ func handlerChirpValid(w http.ResponseWriter, r *http.Request) {
 
 	bytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		marshalError(err, "request body invalid", http.StatusBadRequest, w)
+		writeError(err, "request body invalid", http.StatusBadRequest, w)
 		return
 	}
 
 	var chirpValid chirpValidRQ
 	err = json.Unmarshal(bytes, &chirpValid)
 	if err != nil {
-		marshalError(err, "bad request", http.StatusBadRequest, w)
+		writeError(err, "bad request", http.StatusBadRequest, w)
 		return
 	}
 
@@ -44,7 +44,7 @@ func handlerChirpValid(w http.ResponseWriter, r *http.Request) {
 
 		bytes, err := json.Marshal(response)
 		if err != nil {
-			marshalError(err, "couldn't marshal response", http.StatusInternalServerError, w)
+			writeError(err, "couldn't marshal response", http.StatusInternalServerError, w)
 			return
 		}
 
@@ -54,7 +54,7 @@ func handlerChirpValid(w http.ResponseWriter, r *http.Request) {
 		response := chirpValidRes{Valid: false}
 		bytes, err := json.Marshal(response)
 		if err != nil {
-			marshalError(err, "couldn't marshal response", http.StatusInternalServerError, w)
+			writeError(err, "couldn't marshal response", http.StatusInternalServerError, w)
 			return
 		}
 

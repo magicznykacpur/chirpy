@@ -38,8 +38,9 @@ func main() {
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("GET /api/healthz", handlerHealth)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
+	mux.HandleFunc("GET /admin/users", apiCfg.handlerGetUsers)
 	mux.HandleFunc("POST /api/validate_chirp", handlerChirpValid)
-	mux.HandleFunc("POST /api/users", handlerChirpValid)
+	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 
 	server := http.Server{Handler: &mux, Addr: ":" + port}
 
