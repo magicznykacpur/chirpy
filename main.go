@@ -12,6 +12,11 @@ import (
 	"github.com/magicznykacpur/chirpy/internal/database"
 )
 
+type apiConfig struct {
+	fileserverHits atomic.Int32
+	db             *database.Queries
+}
+
 func main() {
 	godotenv.Load()
 
@@ -34,6 +39,7 @@ func main() {
 	mux.HandleFunc("GET /api/healthz", handlerHealth)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	mux.HandleFunc("POST /api/validate_chirp", handlerChirpValid)
+	mux.HandleFunc("POST /api/users", handlerChirpValid)
 
 	server := http.Server{Handler: &mux, Addr: ":" + port}
 
