@@ -11,8 +11,9 @@ import (
 )
 
 type userRQ struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email            string `json:"email"`
+	Password         string `json:"password"`
+	ExpiresInSeconds int    `json:"expires_in_seconds"`
 }
 
 type userRes struct {
@@ -20,6 +21,7 @@ type userRes struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	Token     string    `json:"token"`
 }
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +117,27 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := userRes{Id: user.ID.String(), CreatedAt: user.CreatedAt, UpdatedAt: user.UpdatedAt, Email: user.Email}
+	var expiresIn time.Duration
+
+	if userRQ.ExpiresInSeconds > 3600 || userRQ.ExpiresInSeconds == 0 {
+		expiresIn = time.Hour
+	} else {
+		expiresIn = time.Second * time.Duration(userRQ.ExpiresInSeconds)
+	}
+
+	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret, expiresIn)
+	if err != nil {
+		writeError(err, "couldn't create a token", http.StatusInternalServerError, w)
+	}
+
+	response := userRes{
+		Id:        user.ID.String(),
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email:     user.Email,
+		Token:     token,
+	}
+
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		writeError(err, "couldn't marshal response", http.StatusInternalServerError, w)

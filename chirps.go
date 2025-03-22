@@ -4,17 +4,18 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/magicznykacpur/chirpy/internal/auth"
 	"github.com/magicznykacpur/chirpy/internal/cleaner"
 	"github.com/magicznykacpur/chirpy/internal/database"
 )
 
 type createChirpRQ struct {
-	Body   string `json:"body"`
-	UserId string `json:"user_id"`
+	Body string `json:"body"`
 }
 
 type chirpRes struct {
@@ -28,6 +29,18 @@ type chirpRes struct {
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		writeError(err, "unauthorized", http.StatusUnauthorized, w)
+		return
+	}
+
+	userId, err := auth.ValidateJWT(token, os.Getenv("JWT_SECRET"))
+	if err != nil {
+		writeError(err, "cannot validate jwt token", http.StatusUnauthorized, w)
+		return
+	}
+
 	bytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		writeError(err, "request body invalid", http.StatusBadRequest, w)
@@ -36,14 +49,8 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 
 	var createChirpRQ createChirpRQ
 	err = json.Unmarshal(bytes, &createChirpRQ)
-	if err != nil || createChirpRQ.Body == "" || createChirpRQ.UserId == "" {
-		writeError(err, "bad request, check if chirp contains user id and body", http.StatusBadRequest, w)
-		return
-	}
-
-	userId, err := uuid.Parse(createChirpRQ.UserId)
-	if err != nil {
-		writeError(err, "cannot parse user id", http.StatusBadRequest, w)
+	if err != nil || createChirpRQ.Body == "" {
+		writeError(err, "bad request, check if chirp contains body", http.StatusBadRequest, w)
 		return
 	}
 
@@ -134,8 +141,8 @@ func (cfg *apiConfig) handlerGetChirpById(w http.ResponseWriter, r *http.Request
 	if err != nil && strings.Contains(err.Error(), "no rows in result set") {
 		writeError(nil, "chirp not found", http.StatusNotFound, w)
 		return
-	} 
-	
+	}
+
 	if err != nil && !strings.Contains(err.Error(), "no rows in result set") {
 		writeError(err, "couldn't retrieve chirp", http.StatusInternalServerError, w)
 		return

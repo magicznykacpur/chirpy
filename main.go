@@ -15,6 +15,7 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
+	jwtSecret      string
 }
 
 func main() {
@@ -30,7 +31,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	apiCfg := apiConfig{fileserverHits: atomic.Int32{}, db: database.New(db)}
+	apiCfg := apiConfig{
+		fileserverHits: atomic.Int32{},
+		db:             database.New(db),
+		jwtSecret:      os.Getenv("JWT_SECRET"),
+	}
+	
 	mux := http.ServeMux{}
 
 	fileServerHandler := http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))

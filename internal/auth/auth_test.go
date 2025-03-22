@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -73,5 +74,28 @@ func TestJWTTokenExpiration(t *testing.T) {
 	_, err = ValidateJWT(token, secret)
 	if err == nil {
 		t.Errorf("token should be expired")
+	}
+}
+
+func TestGetBearerToken(t *testing.T) {
+	headerNoAuth := http.Header{}
+	headerNoAuth.Add("Content-Type", "application/json")
+
+	_, err := GetBearerToken(headerNoAuth)
+	if err.Error() != "authorization token missing from header" {
+		t.Errorf("get bearer token should not detect missing authorization")
+	}
+
+	bearerToken := "this-is-my-token"
+	headerWithAuth := http.Header{}
+	headerWithAuth.Add("Authorization", "Bearer " + bearerToken)
+
+	token, err := GetBearerToken(headerWithAuth)
+	if err != nil {
+		t.Errorf("bearer token not detected: %v", err)
+	}
+
+	if token != bearerToken {
+		t.Errorf("token mismatch --> %s != %s", token, bearerToken)
 	}
 }
