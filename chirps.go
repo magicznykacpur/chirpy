@@ -16,7 +16,7 @@ type createChirpRQ struct {
 	UserId string `json:"user_id"`
 }
 
-type createChirpRes struct {
+type chirpRes struct {
 	Id        string    `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -63,7 +63,7 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	response := createChirpRes{
+	response := chirpRes{
 		Id:        chirp.ID.String(),
 		CreatedAt: chirp.CreatedAt,
 		UpdatedAt: chirp.UpdatedAt,
@@ -89,4 +89,34 @@ func cleanChirpBody(body string) string {
 		cleaned = cleaner.CleanBodyBy(cleaned, badWord)
 	}
 	return cleaned
+}
+
+func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
+	chirps, err := cfg.db.GetAllChirps(r.Context())
+	if err != nil {
+		writeError(err, "couldn't retrieve chirps", http.StatusInternalServerError, w)
+		return
+	}
+
+	chirpResList := []chirpRes{}
+	for _, chirp := range chirps {
+		chirpResList = append(chirpResList,
+			chirpRes{
+				Id:        chirp.ID.String(),
+				CreatedAt: chirp.CreatedAt,
+				UpdatedAt: chirp.UpdatedAt,
+				Body:      chirp.Body,
+				UserId:    chirp.UserID.String(),
+			},
+		)
+	}
+
+	responseBytes, err := json.Marshal(chirpResList)
+	if err != nil {
+		writeError(err, "couldn't marshall response", http.StatusInternalServerError, w)
+		return
+	}
+
+	w.Header().Set("Contet-Type", "application/json")
+	w.Write(responseBytes)
 }
