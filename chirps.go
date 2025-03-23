@@ -100,7 +100,26 @@ func cleanChirpBody(body string) string {
 }
 
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
-	chirps, err := cfg.db.GetAllChirps(r.Context())
+	authorParam := r.URL.Query().Get("author_id")
+	var authorId uuid.UUID
+	var err error
+
+	if authorParam != "" {
+		authorId, err = uuid.Parse(authorParam)
+		if err != nil {
+			writeError(err, "id malformed", http.StatusBadRequest, w)
+			return
+		}
+	}
+
+	var chirps []database.Chirp
+
+	if authorId != (uuid.UUID{}) {
+		chirps, err = cfg.db.GetChirpsByUser(r.Context(), authorId)
+	} else {
+		chirps, err = cfg.db.GetAllChirps(r.Context())
+	}
+
 	if err != nil {
 		writeError(err, "couldn't retrieve chirps", http.StatusInternalServerError, w)
 		return

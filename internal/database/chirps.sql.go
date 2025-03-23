@@ -89,7 +89,7 @@ func (q *Queries) GetAllChirps(ctx context.Context) ([]Chirp, error) {
 }
 
 const getChirp = `-- name: GetChirp :one
-SELECT id, created_at, updated_at, body, user_id FROM chirps where id = $1
+SELECT id, created_at, updated_at, body, user_id FROM chirps WHERE id = $1
 `
 
 func (q *Queries) GetChirp(ctx context.Context, id uuid.UUID) (Chirp, error) {
@@ -106,7 +106,7 @@ func (q *Queries) GetChirp(ctx context.Context, id uuid.UUID) (Chirp, error) {
 }
 
 const getChirpsByUser = `-- name: GetChirpsByUser :many
-SELECT id, created_at, updated_at, body, user_id FROM chirps where user_id = $1
+SELECT id, created_at, updated_at, body, user_id FROM chirps WHERE user_id = $1 ORDER BY created_at
 `
 
 func (q *Queries) GetChirpsByUser(ctx context.Context, userID uuid.UUID) ([]Chirp, error) {

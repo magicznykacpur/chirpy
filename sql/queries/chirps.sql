@@ -10,10 +10,10 @@ VALUES (
 RETURNING *;
 
 -- name: GetChirp :one
-SELECT * FROM chirps where id = $1;
+SELECT * FROM chirps WHERE id = $1;
 
 -- name: GetChirpsByUser :many
-SELECT * FROM chirps where user_id = $1;
+SELECT * FROM chirps WHERE user_id = $1 ORDER BY created_at;
 
 -- name: GetAllChirps :many
 SELECT * FROM chirps ORDER BY created_at;

@@ -69,7 +69,7 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		CreatedAt:   user.CreatedAt,
 		UpdatedAt:   user.UpdatedAt,
 		Email:       user.Email,
-		IsChirpyRed: user.IsChirpyRed,
+		IsChirpyRed: user.IsChirpyRed.Bool,
 	}
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
@@ -149,7 +149,7 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:    user.CreatedAt,
 		UpdatedAt:    user.UpdatedAt,
 		Email:        user.Email,
-		IsChirpyRed:  user.IsChirpyRed,
+		IsChirpyRed:  user.IsChirpyRed.Bool,
 		Token:        token,
 		RefreshToken: refreshToken.Token,
 	}
@@ -221,7 +221,7 @@ func (cfg *apiConfig) handlerUpdateEmailAndPassword(w http.ResponseWriter, r *ht
 		CreatedAt:   user.CreatedAt,
 		UpdatedAt:   user.UpdatedAt,
 		Email:       user.Email,
-		IsChirpyRed: user.IsChirpyRed,
+		IsChirpyRed: user.IsChirpyRed.Bool,
 	}
 
 	responseBytes, err := json.Marshal(userRes)
@@ -249,7 +249,7 @@ func (cfg *apiConfig) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 				CreatedAt:   user.CreatedAt,
 				UpdatedAt:   user.UpdatedAt,
 				Email:       user.Email,
-				IsChirpyRed: user.IsChirpyRed,
+				IsChirpyRed: user.IsChirpyRed.Bool,
 			},
 		)
 	}
