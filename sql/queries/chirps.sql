@@ -19,4 +19,4 @@ SELECT * FROM chirps where user_id = $1;
 SELECT * FROM chirps ORDER BY created_at;
 
 -- name: DeleteChirp :exec
-DELETE FROM chirps WHERE id = $1;
+DELETE FROM chirps WHERE id = $1 and user_id = $2;
