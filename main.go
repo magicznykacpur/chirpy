@@ -36,7 +36,7 @@ func main() {
 		db:             database.New(db),
 		jwtSecret:      os.Getenv("JWT_SECRET"),
 	}
-	
+
 	mux := http.ServeMux{}
 
 	fileServerHandler := http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))
@@ -48,13 +48,13 @@ func main() {
 
 	mux.HandleFunc("GET /api/healthz", handlerHealth)
 
-	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
-
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirp)
 	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetAllChirps)
 	mux.HandleFunc("GET /api/chirps/{id}", apiCfg.handlerGetChirpById)
 
+	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	mux.HandleFunc("POST /api/login", apiCfg.handlerLoginUser)
+	mux.HandleFunc("PUT /api/users", apiCfg.handlerUpdateEmailAndPassword)
 
 	mux.HandleFunc("POST /api/refresh", apiCfg.handlerRefresh)
 	mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)

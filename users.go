@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/magicznykacpur/chirpy/internal/auth"
@@ -151,6 +152,75 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		writeError(err, "couldn't marshal response", http.StatusInternalServerError, w)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(responseBytes)
+}
+
+func (cfg *apiConfig) handlerUpdateEmailAndPassword(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		writeError(err, "couldn't get bearer token", http.StatusUnauthorized, w)
+		return
+	}
+
+	userId, err := auth.ValidateJWT(token, os.Getenv("JWT_SECRET"))
+	if err != nil {
+		writeError(err, "token invalid", http.StatusUnauthorized, w)
+		return
+	}
+
+	defer r.Body.Close()
+	requestBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		writeError(err, "couldn't read request bytes", http.StatusInternalServerError, w)
+		return
+	}
+
+	var userRQ userRQ
+	err = json.Unmarshal(requestBytes, &userRQ)
+	if err != nil {
+		writeError(err, "couldn't unmarshall request bytes", http.StatusInternalServerError, w)
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(userRQ.Password)
+	if err != nil {
+		writeError(err, "couldn't hash password", http.StatusInternalServerError, w)
+		return
+	}
+
+	err = cfg.db.UpdateUserEmailAndPassword(r.Context(),
+		database.UpdateUserEmailAndPasswordParams{
+			Email:          userRQ.Email,
+			HashedPassword: hashedPassword,
+			ID:             userId,
+		},
+	)
+	if err != nil {
+		writeError(err, "couldn't update users data", http.StatusInternalServerError, w)
+		return
+	}
+
+	user, err := cfg.db.GetUserByEmail(r.Context(), userRQ.Email)
+	if err != nil {
+		writeError(err, "couldn't retrieve user", http.StatusNotFound, w)
+		return
+	}
+
+	userRes := userRes{
+		Id:        user.ID.String(),
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email:     user.Email,
+	}
+
+	responseBytes, err := json.Marshal(userRes)
 	if err != nil {
 		writeError(err, "couldn't marshal response", http.StatusInternalServerError, w)
 		return
