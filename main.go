@@ -56,6 +56,9 @@ func main() {
 
 	mux.HandleFunc("POST /api/login", apiCfg.handlerLoginUser)
 
+	mux.HandleFunc("POST /api/refresh", apiCfg.handlerRefresh)
+	mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
+
 	server := http.Server{Handler: &mux, Addr: ":" + port}
 
 	fmt.Printf("starting server on %v\n", server.Addr)

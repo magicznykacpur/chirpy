@@ -99,3 +99,15 @@ func TestGetBearerToken(t *testing.T) {
 		t.Errorf("token mismatch --> %s != %s", token, bearerToken)
 	}
 }
+
+func TestMakeRefreshToken(t *testing.T) {
+	refreshToken, err := MakeRefreshToken()
+	
+	if err != nil {
+		t.Errorf("make refresh token shouldn't return an error")
+	}
+
+	if len(refreshToken) != 64 {
+		t.Errorf("refresh token should be of lenght 64, but is %d", len(refreshToken))
+	}
+}

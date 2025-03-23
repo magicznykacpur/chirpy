@@ -11,17 +11,17 @@ import (
 )
 
 type userRQ struct {
-	Email            string `json:"email"`
-	Password         string `json:"password"`
-	ExpiresInSeconds int    `json:"expires_in_seconds"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type userRes struct {
-	Id        string    `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
-	Token     string    `json:"token"`
+	Id           string    `json:"id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Email        string    `json:"email"`
+	Token        string    `json:"token,omitempty"`
+	RefreshToken string    `json:"refresh_token,omitempty"`
 }
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -117,25 +117,37 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var expiresIn time.Duration
-
-	if userRQ.ExpiresInSeconds > 3600 || userRQ.ExpiresInSeconds == 0 {
-		expiresIn = time.Hour
-	} else {
-		expiresIn = time.Second * time.Duration(userRQ.ExpiresInSeconds)
-	}
-
-	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret, expiresIn)
+	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret, time.Hour)
 	if err != nil {
 		writeError(err, "couldn't create a token", http.StatusInternalServerError, w)
+		return
+	}
+
+	randomString, err := auth.MakeRefreshToken()
+	if err != nil {
+		writeError(err, "couldn't generate random string", http.StatusInternalServerError, w)
+		return
+	}
+
+	refreshToken, err := cfg.db.CreateRefreshToken(r.Context(),
+		database.CreateRefreshTokenParams{
+			Token:     randomString,
+			UserID:    user.ID,
+			ExpiresAt: time.Now().Add(time.Hour * 24 * 60),
+		},
+	)
+	if err != nil {
+		writeError(err, "couldn't create refresh token", http.StatusInternalServerError, w)
+		return
 	}
 
 	response := userRes{
-		Id:        user.ID.String(),
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
-		Token:     token,
+		Id:           user.ID.String(),
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Email:        user.Email,
+		Token:        token,
+		RefreshToken: refreshToken.Token,
 	}
 
 	responseBytes, err := json.Marshal(response)
