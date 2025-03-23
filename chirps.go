@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -101,6 +102,8 @@ func cleanChirpBody(body string) string {
 
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
 	authorParam := r.URL.Query().Get("author_id")
+	sortParam := r.URL.Query().Get("sort")
+
 	var authorId uuid.UUID
 	var err error
 
@@ -118,6 +121,14 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 		chirps, err = cfg.db.GetChirpsByUser(r.Context(), authorId)
 	} else {
 		chirps, err = cfg.db.GetAllChirps(r.Context())
+	}
+
+	if sortParam == "desc" {
+		sort.Slice(chirps,
+			func(i, j int) bool {
+				return chirps[i].CreatedAt.After(chirps[j].CreatedAt)
+			},
+		)
 	}
 
 	if err != nil {
