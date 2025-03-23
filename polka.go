@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/magicznykacpur/chirpy/internal/auth"
 )
 
 type polkaRQ struct {
@@ -17,6 +19,12 @@ type polkaRQ struct {
 }
 
 func (cfg *apiConfig) handlerUpgradeWebhook(w http.ResponseWriter, r *http.Request) {
+	apiKey, err := auth.GetApiKey(r.Header)
+	if err != nil || apiKey != os.Getenv("POLKA_KEY") {
+		writeError(err, "api key invalid", http.StatusUnauthorized, w)
+		return
+	}
+
 	defer r.Body.Close()
 
 	requestBytes, err := io.ReadAll(r.Body)

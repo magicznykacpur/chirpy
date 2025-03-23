@@ -16,6 +16,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
 	jwtSecret      string
+	polkaKey       string
 }
 
 func main() {
@@ -35,6 +36,7 @@ func main() {
 		fileserverHits: atomic.Int32{},
 		db:             database.New(db),
 		jwtSecret:      os.Getenv("JWT_SECRET"),
+		polkaKey:       os.Getenv("POLKA_KEY"),
 	}
 
 	mux := http.ServeMux{}
